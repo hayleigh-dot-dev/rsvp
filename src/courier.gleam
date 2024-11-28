@@ -104,6 +104,7 @@ fn expect_json_response(
 
     case response.get_header(response, "content-type") {
       Ok("application/json") -> Ok(response)
+      Ok("application/json;" <> _) -> Ok(response)
       _ -> Error(UnhandledResponse(response))
     }
   })
@@ -147,6 +148,7 @@ fn expect_text_response(
 
     case response.get_header(response, "content-type") {
       Ok("text/plain") -> Ok(response)
+      Ok("text/plain;" <> _) -> Ok(response)
       _ -> Error(UnhandledResponse(response))
     }
   })
