@@ -1,16 +1,13 @@
 name = "courier"
 version = "1.0.0"
 
-# Fill out these fields if you intend to generate HTML documentation or publish
-# your project to the Hex package manager.
-#
-# description = ""
-# licences = ["Apache-2.0"]
-# repository = { type = "github", user = "", repo = "" }
-# links = [{ title = "Website", href = "" }]
-#
-# For a full reference of all the available options, you can have a look at
-# https://gleam.run/writing-gleam/gleam-toml/.
+description = "Send HTTP requests from Lustre applications and server components."
+repository = { type = "github", user = "hayleigh-dot-dev", repo = "courier" }
+licences = ["MIT"]
+
+links = [
+    { title = "Sponsor", href = "https://github.com/sponsors/hayleigh-dot-dev" },
+]
 
 [dependencies]
 gleam_erlang = ">= 0.30.0 and < 1.0.0"
