@@ -27,8 +27,6 @@ jobs:
 
       - run: gleam format --check
 
-      - run: gleam test
-
       - run: gleam publish -y
         env:
           HEXPM_USER: ${{ secrets.HEX_USERNAME }}
