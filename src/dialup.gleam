@@ -24,22 +24,38 @@ import gleam/javascript/promise
 
 /// A request might fail for a number of reasons. This type is a high-level
 /// wrapper over the different kinds of errors that might occur when creating and
-/// executing a HTTP request.
+/// executing an HTTP request.
 ///
 pub type Error {
+  /// This error can happen when we successfully receive a HTTP response but the
+  /// body of the response is invalid or not well-formed.
   ///
   BadBody
-  /// This error can happen when the URL provided to the `get` or `post`
+  /// This error can happen when the URL string provided to the [`get`](#get) or
+  /// [`post`](#post) helpers is not well-formed.
+  ///
   BadUrl(String)
+  /// This error can happen when the HTTP response status code is not in the `2xx`
+  /// range but a handler expected it to be.
+  ///
   HttpError(Response(String))
+  /// This error is returned when decoding a JSON response body fails.
+  ///
   JsonError(json.DecodeError)
+  /// This error can happen when the HTTP request fails to connect to the server
+  /// or there is some other connectivity issue.
+  ///
   NetworkError
+  /// This error can be returned by a handler when it does not know how to handle
+  /// a response. For example, the [`expect_json`](#expect_json) handler will return
+  /// this error if the response content-type is not `"application/json"`.
+  ///
   UnhandledResponse(Response(String))
 }
 
 /// A handler is a function that knows how to take the result of a HTTP request
 /// and turn it into a message that can be dispatched back to your `update`
-/// function. Courier exposess a number of handlers for common scenarios:
+/// function. Dialup exposess a number of handlers for common scenarios:
 ///
 /// - [`expect_json`](#expect_json) to ensure a response's content-type is
 ///   `"application/json"` and run a JSON decoder on that body.
@@ -364,7 +380,7 @@ fn to_scheme(scheme: Option(String)) -> http.Scheme {
 /// This function will always fail when running on the server, but in the browser
 /// it will resolve relative URIs based on the current page's URL
 ///
-@external(javascript, "./courier.ffi.mjs", "from_relative_url")
+@external(javascript, "./dialup.ffi.mjs", "from_relative_url")
 pub fn parse_relative_uri(_uri_string: String) -> Result(Uri, Nil) {
   Error(Nil)
 }

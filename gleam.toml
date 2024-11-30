@@ -1,8 +1,8 @@
-name = "courier"
+name = "dialup"
 version = "1.0.0"
 
 description = "Send HTTP requests from Lustre applications and server components."
-repository = { type = "github", user = "hayleigh-dot-dev", repo = "courier" }
+repository = { type = "github", user = "hayleigh-dot-dev", repo = "dialup" }
 licences = ["MIT"]
 
 links = [
