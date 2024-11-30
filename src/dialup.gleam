@@ -5,9 +5,8 @@ import gleam/http
 import gleam/http/request.{type Request, Request}
 import gleam/http/response.{type Response}
 import gleam/json.{type Json}
-import gleam/option.{type Option}
 import gleam/result
-import gleam/uri.{type Uri}
+import gleam/uri.{type Uri, Uri}
 import lustre/effect.{type Effect}
 
 @target(erlang)
@@ -226,28 +225,13 @@ pub fn expect_any_response(
 ///
 pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
-    Ok(uri) -> {
-      send(
-        Request(
-          method: http.Get,
-          headers: [],
-          body: "",
-          scheme: to_scheme(uri.scheme),
-          host: uri.host |> option.unwrap(""),
-          port: uri.port,
-          path: uri.path,
-          query: uri.query,
-        ),
-        handler,
-      )
-    }
+    Ok(uri) ->
+      request.from_uri(uri)
+      |> result.map(send(_, handler))
+      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
+      |> result.unwrap_both
 
-    Error(err) ->
-      effect.from(fn(dispatch) {
-        Error(err)
-        |> handler.run
-        |> dispatch
-      })
+    Error(err) -> reject(err, handler)
   }
 }
 
@@ -262,28 +246,19 @@ pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
 ///
 pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
-    Ok(uri) -> {
-      send(
-        Request(
-          method: http.Post,
-          headers: [#("content-type", "application/json")],
-          body: json.to_string(body),
-          scheme: to_scheme(uri.scheme),
-          host: uri.host |> option.unwrap(""),
-          port: uri.port,
-          path: uri.path,
-          query: uri.query,
-        ),
-        handler,
-      )
-    }
-
-    Error(err) ->
-      effect.from(fn(dispatch) {
-        Error(err)
-        |> handler.run
-        |> dispatch
+    Ok(uri) ->
+      request.from_uri(uri)
+      |> result.map(fn(request) {
+        request
+        |> request.set_method(http.Post)
+        |> request.set_header("content-type", "application/json")
+        |> request.set_body(json.to_string(body))
+        |> send(handler)
       })
+      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
+      |> result.unwrap_both
+
+    Error(err) -> reject(err, handler)
   }
 }
 
@@ -348,6 +323,14 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
 
 // UTILS -----------------------------------------------------------------------
 
+fn reject(err: Error, handler: Handler(msg)) -> Effect(msg) {
+  effect.from(fn(dispatch) {
+    Error(err)
+    |> handler.run
+    |> dispatch
+  })
+}
+
 fn decode_json_body(
   response: Response(String),
   decoder: dynamic.Decoder(a),
@@ -362,15 +345,7 @@ fn to_uri(uri_string: String) -> Result(Uri, Error) {
     "./" <> _ | "/" <> _ -> parse_relative_uri(uri_string)
     _ -> uri.parse(uri_string)
   }
-  |> result.map_error(fn(_) { BadUrl(uri_string) })
-}
-
-fn to_scheme(scheme: Option(String)) -> http.Scheme {
-  case scheme {
-    option.Some("http") -> http.Http
-    option.Some("https") -> http.Https
-    _ -> http.Https
-  }
+  |> result.replace_error(BadUrl(uri_string))
 }
 
 /// The standard library [`uri.parse`](https://hexdocs.pm/gleam_stdlib/0.45.0/gleam/uri.html#parse)
