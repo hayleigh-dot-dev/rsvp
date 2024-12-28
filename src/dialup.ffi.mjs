@@ -1,5 +1,6 @@
 import { Ok, Error } from "./gleam.mjs";
 import { Uri } from "../gleam_stdlib/gleam/uri.mjs";
+import { Some, None } from "../gleam_stdlib/gleam/option.mjs";
 
 export const from_relative_url = (url_string) => {
   if (!globalThis.location) return new Error(undefined);
