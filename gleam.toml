@@ -1,8 +1,8 @@
-name = "dialup"
+name = "rsvp"
 version = "1.0.0"
 
 description = "Send HTTP requests from Lustre applications and server components."
-repository = { type = "github", user = "hayleigh-dot-dev", repo = "dialup" }
+repository = { type = "github", user = "hayleigh-dot-dev", repo = "rsvp" }
 licences = ["MIT"]
 
 links = [

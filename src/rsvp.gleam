@@ -54,7 +54,7 @@ pub type Error {
 
 /// A handler is a function that knows how to take the result of a HTTP request
 /// and turn it into a message that can be dispatched back to your `update`
-/// function. Dialup exposess a number of handlers for common scenarios:
+/// function. rsvp exposess a number of handlers for common scenarios:
 ///
 /// - [`expect_json`](#expect_json) to ensure a response's content-type is
 ///   `"application/json"` and run a JSON decoder on that body.
@@ -162,8 +162,7 @@ fn expect_text_response(
     use response <- result.try(result)
 
     case response.get_header(response, "content-type") {
-      Ok("text/plain") -> Ok(response)
-      Ok("text/plain;" <> _) -> Ok(response)
+      Ok("text/" <> _) -> Ok(response)
       _ -> Error(UnhandledResponse(response))
     }
   })
@@ -355,7 +354,7 @@ fn to_uri(uri_string: String) -> Result(Uri, Error) {
 /// This function will always fail when running on the server, but in the browser
 /// it will resolve relative URIs based on the current page's URL
 ///
-@external(javascript, "./dialup.ffi.mjs", "from_relative_url")
+@external(javascript, "./rsvp.ffi.mjs", "from_relative_url")
 pub fn parse_relative_uri(_uri_string: String) -> Result(Uri, Nil) {
   Error(Nil)
 }
