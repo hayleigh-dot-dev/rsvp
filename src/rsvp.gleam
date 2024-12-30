@@ -1,6 +1,6 @@
 // IMPORTS ---------------------------------------------------------------------
 
-import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/http
 import gleam/http/request.{type Request, Request}
 import gleam/http/response.{type Response}
@@ -99,7 +99,7 @@ pub opaque type Handler(msg) {
 /// [`expect_any_response`](#expect_any_response) handlers.
 ///
 pub fn expect_json(
-  decoder: dynamic.Decoder(a),
+  decoder: decode.Decoder(a),
   handler: fn(Result(a, Error)) -> msg,
 ) -> Handler(msg) {
   use result <- expect_json_response
@@ -323,19 +323,19 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
 // UTILS -----------------------------------------------------------------------
 
 fn reject(err: Error, handler: Handler(msg)) -> Effect(msg) {
-  effect.from(fn(dispatch) {
-    Error(err)
-    |> handler.run
-    |> dispatch
-  })
+  use dispatch <- effect.from
+
+  Error(err)
+  |> handler.run
+  |> dispatch
 }
 
 fn decode_json_body(
   response: Response(String),
-  decoder: dynamic.Decoder(a),
+  decoder: decode.Decoder(a),
 ) -> Result(a, Error) {
   response.body
-  |> json.decode(decoder)
+  |> json.parse(decoder)
   |> result.map_error(JsonError)
 }
 
