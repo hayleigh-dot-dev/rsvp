@@ -59,8 +59,8 @@ pub type Error {
 /// - [`expect_json`](#expect_json) to ensure a response's content-type is
 ///   `"application/json"` and run a JSON decoder on that body.
 ///
-/// - [`expect_text`](#expect_text) to ensure a response's content-type is
-///   `"text/plain"` and return the body as a string.
+/// - [`expect_text`](#expect_text) to ensure a response's content-type specifies
+///   `"text/"` and return the body as a string.
 ///
 /// - [`expect_ok_response`](#expect_ok_response) to handle any response with a
 ///   2xx status code.
@@ -130,7 +130,8 @@ fn expect_json_response(
 ///
 /// - The response status code is `2xx`.
 ///
-/// - The response content-type is `"text/plain"`
+/// - The response content-type specifies `"text/"` such as `"text/plain"` or
+///   `"text/html"`.
 ///
 /// If any of these conditions are not met, an `Error` will be returned instead.
 /// The specific error will depend on which condition failed:
@@ -223,6 +224,13 @@ pub fn expect_any_response(
 /// example to set additional headers or use a different HTTP method, you should
 /// use the more-general [`send`](#send) function insteaed.
 ///
+/// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
+/// sure you have a polyfill for it if you need to support older browsers or
+/// server-side runtimes that don't have it.
+///
+/// **Note**: On the **Erlang** target this will use the `httpc` module. Each
+/// request will start a new linked process to make and handle the request.
+///
 pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
     Ok(uri) ->
@@ -243,6 +251,13 @@ pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
 /// **Note**: if you need more control over the kind of request being sent, for
 /// example to set additional headers or use a different HTTP method, you should
 /// use the more-general [`send`](#send) function insteaed.
+///
+/// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
+/// sure you have a polyfill for it if you need to support older browsers or
+/// server-side runtimes that don't have it.
+///
+/// **Note**: On the **Erlang** target this will use the `httpc` module. Each
+/// request will start a new linked process to make and handle the request.
 ///
 pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
@@ -274,7 +289,7 @@ pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 /// server-side runtimes that don't have it.
 ///
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
-/// request will start a new _unlinked_ process to handle the request.
+/// request will start a new linked process to make and handle the request.
 ///
 pub fn send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
   do_send(request, handler)
