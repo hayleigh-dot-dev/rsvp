@@ -26,7 +26,7 @@ import gleam/javascript/promise
 /// executing an HTTP request.
 ///
 pub type Error {
-  /// This error can happen when we successfully receive a HTTP response but the
+  /// This error can happen when we successfully receive an HTTP response but the
   /// body of the response is invalid or not well-formed.
   ///
   BadBody
@@ -52,7 +52,7 @@ pub type Error {
   UnhandledResponse(Response(String))
 }
 
-/// A handler is a function that knows how to take the result of a HTTP request
+/// A handler is a function that knows how to take the result of an HTTP request
 /// and turn it into a message that can be dispatched back to your `update`
 /// function. rsvp exposess a number of handlers for common scenarios:
 ///
@@ -216,7 +216,8 @@ pub fn expect_any_response(
 
 // REQUESTS --------------------------------------------------------------------
 
-/// A convenience function to send a `GET` request to a URL and decode the
+/// A convenience function to send a `GET` request to a URL and handle the response
+/// using a [`Hander`](#Handler).
 ///
 /// **Note**: if you need more control over the kind of request being sent, for
 /// example to set additional headers or use a different HTTP method, you should
