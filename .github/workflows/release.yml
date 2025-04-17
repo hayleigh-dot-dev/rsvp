@@ -32,4 +32,4 @@ jobs:
           HEXPM_API_KEY: ${{ secrets.HEXPM_API_KEY }}
           HEXPM_PASS: ${{ secrets.HEX_PASSWORD }}
 
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
