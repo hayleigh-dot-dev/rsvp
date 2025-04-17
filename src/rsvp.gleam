@@ -2,11 +2,11 @@
 
 import gleam/dynamic/decode
 import gleam/http
-import gleam/http/request.{type Request, Request}
+import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/json.{type Json}
 import gleam/result
-import gleam/uri.{type Uri, Uri}
+import gleam/uri.{type Uri}
 import lustre/effect.{type Effect}
 
 @target(erlang)
@@ -323,13 +323,15 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
 
   fetch.send(request)
   |> promise.try_await(fetch.read_text_body)
-  |> promise.map(result.map_error(_, fn(error) {
-    case error {
-      fetch.NetworkError(_) -> NetworkError
-      fetch.UnableToReadBody -> BadBody
-      fetch.InvalidJsonBody -> BadBody
-    }
-  }))
+  |> promise.map(
+    result.map_error(_, fn(error) {
+      case error {
+        fetch.NetworkError(_) -> NetworkError
+        fetch.UnableToReadBody -> BadBody
+        fetch.InvalidJsonBody -> BadBody
+      }
+    }),
+  )
   |> promise.map(handler.run)
   |> promise.tap(dispatch)
 
