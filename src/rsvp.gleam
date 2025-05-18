@@ -7,6 +7,7 @@ import gleam/http/response.{type Response}
 import gleam/json.{type Json}
 import gleam/result
 import gleam/uri.{type Uri}
+import lustre/dev/simulate.{type Simulation} as lustre_simulate
 import lustre/effect.{type Effect}
 
 @target(erlang)
@@ -336,6 +337,19 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
   |> promise.tap(dispatch)
 
   Nil
+}
+
+//
+
+/// Simulate a response in a simulated application. This runs the provided handler
+/// against the response and dispatches the message to your simulated application.
+///
+pub fn simulate(
+  simulation: Simulation(model, msg),
+  response response: Response(String),
+  handler handler: Handler(msg),
+) -> Simulation(model, msg) {
+  lustre_simulate.message(simulation, handler.run(Ok(response)))
 }
 
 // UTILS -----------------------------------------------------------------------
