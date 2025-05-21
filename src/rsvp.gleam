@@ -223,7 +223,7 @@ pub fn expect_any_response(
 ///
 /// **Note**: if you need more control over the kind of request being sent, for
 /// example to set additional headers or use a different HTTP method, you should
-/// use the more-general [`send`](#send) function insteaed.
+/// use the more-general [`send`](#send) function instead.
 ///
 /// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
 /// sure you have a polyfill for it if you need to support older browsers or
@@ -251,7 +251,7 @@ pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
 ///
 /// **Note**: if you need more control over the kind of request being sent, for
 /// example to set additional headers or use a different HTTP method, you should
-/// use the more-general [`send`](#send) function insteaed.
+/// use the more-general [`send`](#send) function instead.
 ///
 /// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
 /// sure you have a polyfill for it if you need to support older browsers or
