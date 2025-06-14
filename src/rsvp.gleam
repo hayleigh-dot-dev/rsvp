@@ -307,6 +307,7 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
         case error {
           httpc.InvalidUtf8Response -> BadBody
           httpc.FailedToConnect(_, _) -> NetworkError
+          httpc.ResponseTimeout -> NetworkError
         }
       })
       |> handler.run
