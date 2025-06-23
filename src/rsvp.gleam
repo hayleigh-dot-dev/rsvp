@@ -300,21 +300,17 @@ pub fn send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
 fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
   use dispatch <- effect.from
 
-  process.start(
-    running: fn() {
-      httpc.send(request)
-      |> result.map_error(fn(error) {
-        case error {
-          httpc.InvalidUtf8Response -> BadBody
-          httpc.FailedToConnect(_, _) -> NetworkError
-          httpc.ResponseTimeout -> NetworkError
-        }
-      })
-      |> handler.run
-      |> dispatch
-    },
-    linked: True,
-  )
+  process.spawn(fn() {
+    httpc.send(request)
+    |> result.map_error(fn(error) {
+      case error {
+        httpc.InvalidUtf8Response -> BadBody
+        httpc.FailedToConnect(_, _) -> NetworkError
+      }
+    })
+    |> handler.run
+    |> dispatch
+  })
 
   Nil
 }
