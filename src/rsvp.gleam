@@ -106,7 +106,7 @@ pub fn expect_json(
   use result <- expect_json_response
 
   result
-  |> result.then(decode_json_body(_, decoder))
+  |> result.try(decode_json_body(_, decoder))
   |> handler
 }
 
