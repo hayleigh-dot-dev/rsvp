@@ -305,7 +305,10 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
     |> result.map_error(fn(error) {
       case error {
         httpc.InvalidUtf8Response -> BadBody
-        httpc.FailedToConnect(_, _) -> NetworkError
+        // Catch-all covers the remaining two httpc errors. We do this because
+        // we support both httpc 4.x and 5.x and we don't want errors or warnings
+        // for folks stuck on 4.x.
+        _ -> NetworkError
       }
     })
     |> handler.run
