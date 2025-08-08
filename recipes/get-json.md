@@ -1,6 +1,6 @@
 # Get JSON from an API
 
-Rsvp it easy to fetch remote resources like JSON from an API using the
+In rsvp it's easy to fetch remote resources like JSON from an API using the
 [`get`](https://hexdocs.pm/rsvp/rsvp.html#get) effect.
 
 ```gleam
