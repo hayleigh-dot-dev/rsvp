@@ -5,6 +5,7 @@ import gleam/http
 import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/json.{type Json}
+import gleam/option.{type Option}
 import gleam/result
 import gleam/uri.{type Uri}
 import lustre/dev/simulate.{type Simulation} as lustre_simulate
@@ -219,7 +220,7 @@ pub fn expect_any_response(
 // REQUESTS --------------------------------------------------------------------
 
 /// A convenience function to send a `GET` request to a URL and handle the response
-/// using a [`Hander`](#Handler).
+/// using a [`Handler`](#Handler).
 ///
 /// **Note**: if you need more control over the kind of request being sent, for
 /// example to set additional headers or use a different HTTP method, you should
@@ -267,6 +268,108 @@ pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
       |> result.map(fn(request) {
         request
         |> request.set_method(http.Post)
+        |> request.set_header("content-type", "application/json")
+        |> request.set_body(json.to_string(body))
+        |> send(handler)
+      })
+      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
+      |> result.unwrap_both
+
+    Error(err) -> reject(err, handler)
+  }
+}
+
+/// A convenience function for sending a PUT request with a JSON body and handle
+/// the response with a handler function. This will automatically set the
+/// `content-type` header to `application/json` and handle requests to relative
+/// URLs if this effect is running in a browser.
+///
+/// **Note**: if you need more control over the kind of request being sent, for
+/// example to set additional headers or use a different HTTP method, you should
+/// use the more-general [`send`](#send) function instead.
+///
+/// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
+/// sure you have a polyfill for it if you need to support older browsers or
+/// server-side runtimes that don't have it.
+///
+/// **Note**: On the **Erlang** target this will use the `httpc` module. Each
+/// request will start a new linked process to make and handle the request.
+///
+pub fn put(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+  case to_uri(url) {
+    Ok(uri) ->
+      request.from_uri(uri)
+      |> result.map(fn(request) {
+        request
+        |> request.set_method(http.Put)
+        |> request.set_header("content-type", "application/json")
+        |> request.set_body(json.to_string(body))
+        |> send(handler)
+      })
+      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
+      |> result.unwrap_both
+
+    Error(err) -> reject(err, handler)
+  }
+}
+
+/// A convenience function for sending a PATCH request with a JSON body and handle
+/// the response with a handler function. This will automatically set the
+/// `content-type` header to `application/json` and handle requests to relative
+/// URLs if this effect is running in a browser.
+///
+/// **Note**: if you need more control over the kind of request being sent, for
+/// example to set additional headers or use a different HTTP method, you should
+/// use the more-general [`send`](#send) function instead.
+///
+/// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
+/// sure you have a polyfill for it if you need to support older browsers or
+/// server-side runtimes that don't have it.
+///
+/// **Note**: On the **Erlang** target this will use the `httpc` module. Each
+/// request will start a new linked process to make and handle the request.
+///
+pub fn patch(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+  case to_uri(url) {
+    Ok(uri) ->
+      request.from_uri(uri)
+      |> result.map(fn(request) {
+        request
+        |> request.set_method(http.Patch)
+        |> request.set_header("content-type", "application/json")
+        |> request.set_body(json.to_string(body))
+        |> send(handler)
+      })
+      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
+      |> result.unwrap_both
+
+    Error(err) -> reject(err, handler)
+  }
+}
+
+/// A convenience function for sending a DELETE request with a JSON body and handle
+/// the response with a handler function. This will automatically set the
+/// `content-type` header to `application/json` and handle requests to relative
+/// URLs if this effect is running in a browser.
+///
+/// **Note**: if you need more control over the kind of request being sent, for
+/// example to set additional headers or use a different HTTP method, you should
+/// use the more-general [`send`](#send) function instead.
+///
+/// **Note**: On the **JavaScript** target this will use the `fetch` API. Make
+/// sure you have a polyfill for it if you need to support older browsers or
+/// server-side runtimes that don't have it.
+///
+/// **Note**: On the **Erlang** target this will use the `httpc` module. Each
+/// request will start a new linked process to make and handle the request.
+///
+pub fn delete(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+  case to_uri(url) {
+    Ok(uri) ->
+      request.from_uri(uri)
+      |> result.map(fn(request) {
+        request
+        |> request.set_method(http.Delete)
         |> request.set_header("content-type", "application/json")
         |> request.set_body(json.to_string(body))
         |> send(handler)
