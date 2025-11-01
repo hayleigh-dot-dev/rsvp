@@ -5,7 +5,7 @@ import gleam/http
 import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/json.{type Json}
-import gleam/option.{type Option}
+
 import gleam/result
 import gleam/uri.{type Uri}
 import lustre/dev/simulate.{type Simulation} as lustre_simulate
@@ -236,10 +236,10 @@ pub fn expect_any_response(
 pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
     Ok(uri) ->
-      request.from_uri(uri)
-      |> result.map(send(_, handler))
-      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
-      |> result.unwrap_both
+      case request.from_uri(uri) {
+        Ok(request) -> send(request, handler)
+        Error(_) -> reject(BadUrl(url), handler)
+      }
 
     Error(err) -> reject(err, handler)
   }
@@ -264,16 +264,15 @@ pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
 pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
     Ok(uri) ->
-      request.from_uri(uri)
-      |> result.map(fn(request) {
-        request
-        |> request.set_method(http.Post)
-        |> request.set_header("content-type", "application/json")
-        |> request.set_body(json.to_string(body))
-        |> send(handler)
-      })
-      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
-      |> result.unwrap_both
+      case request.from_uri(uri) {
+        Ok(request) ->
+          request
+          |> request.set_method(http.Post)
+          |> request.set_header("content-type", "application/json")
+          |> request.set_body(json.to_string(body))
+          |> send(handler)
+        Error(_) -> reject(BadUrl(url), handler)
+      }
 
     Error(err) -> reject(err, handler)
   }
@@ -298,16 +297,15 @@ pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 pub fn put(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
     Ok(uri) ->
-      request.from_uri(uri)
-      |> result.map(fn(request) {
-        request
-        |> request.set_method(http.Put)
-        |> request.set_header("content-type", "application/json")
-        |> request.set_body(json.to_string(body))
-        |> send(handler)
-      })
-      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
-      |> result.unwrap_both
+      case request.from_uri(uri) {
+        Ok(request) ->
+          request
+          |> request.set_method(http.Put)
+          |> request.set_header("content-type", "application/json")
+          |> request.set_body(json.to_string(body))
+          |> send(handler)
+        Error(_) -> reject(BadUrl(url), handler)
+      }
 
     Error(err) -> reject(err, handler)
   }
@@ -332,16 +330,15 @@ pub fn put(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 pub fn patch(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
     Ok(uri) ->
-      request.from_uri(uri)
-      |> result.map(fn(request) {
-        request
-        |> request.set_method(http.Patch)
-        |> request.set_header("content-type", "application/json")
-        |> request.set_body(json.to_string(body))
-        |> send(handler)
-      })
-      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
-      |> result.unwrap_both
+      case request.from_uri(uri) {
+        Ok(request) ->
+          request
+          |> request.set_method(http.Patch)
+          |> request.set_header("content-type", "application/json")
+          |> request.set_body(json.to_string(body))
+          |> send(handler)
+        Error(_) -> reject(BadUrl(url), handler)
+      }
 
     Error(err) -> reject(err, handler)
   }
@@ -366,16 +363,15 @@ pub fn patch(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 pub fn delete(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
   case to_uri(url) {
     Ok(uri) ->
-      request.from_uri(uri)
-      |> result.map(fn(request) {
-        request
-        |> request.set_method(http.Delete)
-        |> request.set_header("content-type", "application/json")
-        |> request.set_body(json.to_string(body))
-        |> send(handler)
-      })
-      |> result.map_error(fn(_) { reject(BadUrl(url), handler) })
-      |> result.unwrap_both
+      case request.from_uri(uri) {
+        Ok(request) ->
+          request
+          |> request.set_method(http.Delete)
+          |> request.set_header("content-type", "application/json")
+          |> request.set_body(json.to_string(body))
+          |> send(handler)
+        Error(_) -> reject(BadUrl(url), handler)
+      }
 
     Error(err) -> reject(err, handler)
   }
