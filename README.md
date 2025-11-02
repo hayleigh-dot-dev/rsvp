@@ -18,7 +18,7 @@ Rsvp separates the concerns of making HTTP requests from handling their response
 meaning we need to do three things to properly make a request:
 
 - First, we must define a [`Handler`](./rsvp.html#Handler) that describes how to
-  handler the response and turn it into a message your `update` function can
+  handle the response and turn it into a message your `update` function can
   understand.
 
 - Second, we must create the [`Effect`](https://hexdocs.pm/lustre/lustre/effect.html)
