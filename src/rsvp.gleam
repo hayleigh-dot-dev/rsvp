@@ -3,21 +3,25 @@
 import gleam/dynamic/decode
 import gleam/http
 import gleam/http/request.{type Request}
-import gleam/http/response.{type Response}
 import gleam/json.{type Json}
-
 import gleam/result
 import gleam/uri.{type Uri}
 import lustre/dev/simulate.{type Simulation} as lustre_simulate
 import lustre/effect.{type Effect}
 
 @target(erlang)
+import gleam/bit_array
+@target(erlang)
 import gleam/erlang/process
+@target(erlang)
+import gleam/http/response.{type Response, Response}
 @target(erlang)
 import gleam/httpc
 
 @target(javascript)
 import gleam/fetch
+@target(javascript)
+import gleam/http/response.{type Response}
 @target(javascript)
 import gleam/javascript/promise
 
@@ -422,6 +426,75 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
   use dispatch <- effect.from
 
   fetch.send(request)
+  |> promise.try_await(fetch.read_text_body)
+  |> promise.map(
+    result.map_error(_, fn(error) {
+      case error {
+        fetch.NetworkError(_) -> NetworkError
+        fetch.UnableToReadBody -> BadBody
+        fetch.InvalidJsonBody -> BadBody
+      }
+    }),
+  )
+  |> promise.map(handler.run)
+  |> promise.tap(dispatch)
+
+  Nil
+}
+
+/// Send a [`Request`](https://hexdocs.pm/gleam_http/gleam/http/request.html#Request)
+/// with a `BitArray` body and dispatch a message back to your `update` function
+/// when the response is handled.
+///
+/// Rsvp requires all responses to be UTF-8 encoded strings, and `BitArray`
+/// responses that cannot be decoded as UTF-8 will return a `BadBody` error.
+///
+pub fn send_bits(
+  request: Request(BitArray),
+  handler: Handler(msg),
+) -> Effect(msg) {
+  do_send_bits(request, handler)
+}
+
+@target(erlang)
+fn do_send_bits(
+  request: Request(BitArray),
+  handler: Handler(msg),
+) -> Effect(msg) {
+  use dispatch <- effect.from
+
+  process.spawn(fn() {
+    httpc.send_bits(request)
+    |> result.map_error(fn(error) {
+      case error {
+        httpc.InvalidUtf8Response -> BadBody
+        // Catch-all covers the remaining two httpc errors. We do this because
+        // we support both httpc 4.x and 5.x and we don't want errors or warnings
+        // for folks stuck on 4.x.
+        _ -> NetworkError
+      }
+    })
+    |> result.try(fn(response) {
+      case bit_array.to_string(response.body) {
+        Ok(body) -> Ok(Response(..response, body:))
+        Error(_) -> Error(BadBody)
+      }
+    })
+    |> handler.run
+    |> dispatch
+  })
+
+  Nil
+}
+
+@target(javascript)
+fn do_send_bits(
+  request: Request(BitArray),
+  handler: Handler(msg),
+) -> Effect(msg) {
+  use dispatch <- effect.from
+
+  fetch.send_bits(request)
   |> promise.try_await(fetch.read_text_body)
   |> promise.map(
     result.map_error(_, fn(error) {
