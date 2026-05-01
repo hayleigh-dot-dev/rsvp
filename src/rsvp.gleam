@@ -10,11 +10,9 @@ import lustre/dev/simulate.{type Simulation} as lustre_simulate
 import lustre/effect.{type Effect}
 
 @target(erlang)
-import gleam/bit_array
-@target(erlang)
 import gleam/erlang/process
 @target(erlang)
-import gleam/http/response.{type Response, Response}
+import gleam/http/response.{type Response}
 @target(erlang)
 import gleam/httpc
 
@@ -31,7 +29,7 @@ import gleam/javascript/promise
 /// wrapper over the different kinds of errors that might occur when creating and
 /// executing an HTTP request.
 ///
-pub type Error {
+pub type Error(body) {
   /// This error can happen when we successfully receive an HTTP response but the
   /// body of the response is invalid or not well-formed.
   ///
@@ -43,7 +41,7 @@ pub type Error {
   /// This error can happen when the HTTP response status code is not in the `2xx`
   /// range but a handler expected it to be.
   ///
-  HttpError(Response(String))
+  HttpError(Response(body))
   /// This error is returned when decoding a JSON response body fails.
   ///
   JsonError(json.DecodeError)
@@ -55,7 +53,7 @@ pub type Error {
   /// a response. For example, the [`expect_json`](#expect_json) handler will return
   /// this error if the response content-type is not `"application/json"`.
   ///
-  UnhandledResponse(Response(String))
+  UnhandledResponse(Response(body))
 }
 
 /// A handler is a function that knows how to take the result of an HTTP request
@@ -74,8 +72,8 @@ pub type Error {
 /// - [`expect_any_response`](#expect_any_response) to handle any HTTP response,
 ///   including 4xx and 5xx errors.
 ///
-pub opaque type Handler(msg) {
-  Handler(run: fn(Result(Response(String), Error)) -> msg)
+pub opaque type Handler(body, message) {
+  Handler(run: fn(Result(Response(body), Error(body))) -> message)
 }
 
 // HANDLERS --------------------------------------------------------------------
@@ -106,8 +104,8 @@ pub opaque type Handler(msg) {
 ///
 pub fn expect_json(
   decoder: decode.Decoder(a),
-  handler: fn(Result(a, Error)) -> msg,
-) -> Handler(msg) {
+  handler: fn(Result(a, Error(String))) -> message,
+) -> Handler(String, message) {
   use result <- expect_json_response
 
   result
@@ -116,8 +114,8 @@ pub fn expect_json(
 }
 
 fn expect_json_response(
-  handler: fn(Result(Response(String), Error)) -> msg,
-) -> Handler(msg) {
+  handler: fn(Result(Response(String), Error(String))) -> message,
+) -> Handler(String, message) {
   use result <- expect_ok_response
 
   handler({
@@ -152,7 +150,9 @@ fn expect_json_response(
 /// should use the more-general [`expect_ok_response`](#expect_ok_response) or
 /// [`expect_any_response`](#expect_any_response) handlers.
 ///
-pub fn expect_text(handler: fn(Result(String, Error)) -> msg) -> Handler(msg) {
+pub fn expect_text(
+  handler: fn(Result(String, Error(String))) -> message,
+) -> Handler(String, message) {
   use result <- expect_text_response
 
   result
@@ -161,8 +161,8 @@ pub fn expect_text(handler: fn(Result(String, Error)) -> msg) -> Handler(msg) {
 }
 
 fn expect_text_response(
-  handler: fn(Result(Response(String), Error)) -> msg,
-) -> Handler(msg) {
+  handler: fn(Result(Response(String), Error(String))) -> message,
+) -> Handler(String, message) {
   use result <- expect_ok_response
 
   handler({
@@ -188,8 +188,8 @@ fn expect_text_response(
 /// handler.
 ///
 pub fn expect_ok_response(
-  handler: fn(Result(Response(String), Error)) -> msg,
-) -> Handler(msg) {
+  handler: fn(Result(Response(body), Error(body))) -> message,
+) -> Handler(body, message) {
   use result <- Handler
 
   handler({
@@ -216,8 +216,8 @@ pub fn expect_ok_response(
 /// - [`expect_json`](#expect_json) to handle responses from JSON apis
 ///
 pub fn expect_any_response(
-  handler: fn(Result(Response(String), Error)) -> msg,
-) -> Handler(msg) {
+  handler: fn(Result(Response(body), Error(body))) -> message,
+) -> Handler(body, message) {
   Handler(handler)
 }
 
@@ -237,7 +237,7 @@ pub fn expect_any_response(
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
 /// request will start a new linked process to make and handle the request.
 ///
-pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
+pub fn get(url: String, handler: Handler(String, message)) -> Effect(message) {
   case to_uri(url) {
     Ok(uri) ->
       case request.from_uri(uri) {
@@ -265,7 +265,11 @@ pub fn get(url: String, handler: Handler(msg)) -> Effect(msg) {
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
 /// request will start a new linked process to make and handle the request.
 ///
-pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+pub fn post(
+  url: String,
+  body: Json,
+  handler: Handler(String, message),
+) -> Effect(message) {
   case to_uri(url) {
     Ok(uri) ->
       case request.from_uri(uri) {
@@ -298,7 +302,11 @@ pub fn post(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
 /// request will start a new linked process to make and handle the request.
 ///
-pub fn put(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+pub fn put(
+  url: String,
+  body: Json,
+  handler: Handler(String, message),
+) -> Effect(message) {
   case to_uri(url) {
     Ok(uri) ->
       case request.from_uri(uri) {
@@ -331,7 +339,11 @@ pub fn put(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
 /// request will start a new linked process to make and handle the request.
 ///
-pub fn patch(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+pub fn patch(
+  url: String,
+  body: Json,
+  handler: Handler(String, message),
+) -> Effect(message) {
   case to_uri(url) {
     Ok(uri) ->
       case request.from_uri(uri) {
@@ -364,7 +376,11 @@ pub fn patch(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
 /// request will start a new linked process to make and handle the request.
 ///
-pub fn delete(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
+pub fn delete(
+  url: String,
+  body: Json,
+  handler: Handler(String, message),
+) -> Effect(message) {
   case to_uri(url) {
     Ok(uri) ->
       case request.from_uri(uri) {
@@ -395,12 +411,18 @@ pub fn delete(url: String, body: Json, handler: Handler(msg)) -> Effect(msg) {
 /// **Note**: On the **Erlang** target this will use the `httpc` module. Each
 /// request will start a new linked process to make and handle the request.
 ///
-pub fn send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
+pub fn send(
+  request: Request(String),
+  handler: Handler(String, message),
+) -> Effect(message) {
   do_send(request, handler)
 }
 
 @target(erlang)
-fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
+fn do_send(
+  request: Request(String),
+  handler: Handler(String, message),
+) -> Effect(message) {
   use dispatch <- effect.from
 
   process.spawn(fn() {
@@ -422,7 +444,10 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
 }
 
 @target(javascript)
-fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
+fn do_send(
+  request: Request(String),
+  handler: Handler(String, message),
+) -> Effect(message) {
   use dispatch <- effect.from
 
   fetch.send(request)
@@ -451,16 +476,16 @@ fn do_send(request: Request(String), handler: Handler(msg)) -> Effect(msg) {
 ///
 pub fn send_bits(
   request: Request(BitArray),
-  handler: Handler(msg),
-) -> Effect(msg) {
+  handler: Handler(BitArray, message),
+) -> Effect(message) {
   do_send_bits(request, handler)
 }
 
 @target(erlang)
 fn do_send_bits(
   request: Request(BitArray),
-  handler: Handler(msg),
-) -> Effect(msg) {
+  handler: Handler(BitArray, message),
+) -> Effect(message) {
   use dispatch <- effect.from
 
   process.spawn(fn() {
@@ -474,12 +499,6 @@ fn do_send_bits(
         _ -> NetworkError
       }
     })
-    |> result.try(fn(response) {
-      case bit_array.to_string(response.body) {
-        Ok(body) -> Ok(Response(..response, body:))
-        Error(_) -> Error(BadBody)
-      }
-    })
     |> handler.run
     |> dispatch
   })
@@ -490,12 +509,12 @@ fn do_send_bits(
 @target(javascript)
 fn do_send_bits(
   request: Request(BitArray),
-  handler: Handler(msg),
-) -> Effect(msg) {
+  handler: Handler(BitArray, message),
+) -> Effect(message) {
   use dispatch <- effect.from
 
   fetch.send_bits(request)
-  |> promise.try_await(fetch.read_text_body)
+  |> promise.try_await(fetch.read_bytes_body)
   |> promise.map(
     result.map_error(_, fn(error) {
       case error {
@@ -517,16 +536,19 @@ fn do_send_bits(
 /// against the response and dispatches the message to your simulated application.
 ///
 pub fn simulate(
-  simulation: Simulation(model, msg),
-  response response: Response(String),
-  handler handler: Handler(msg),
-) -> Simulation(model, msg) {
+  simulation: Simulation(model, message),
+  response response: Response(body),
+  handler handler: Handler(body, message),
+) -> Simulation(model, message) {
   lustre_simulate.message(simulation, handler.run(Ok(response)))
 }
 
 // UTILS -----------------------------------------------------------------------
 
-fn reject(err: Error, handler: Handler(msg)) -> Effect(msg) {
+fn reject(
+  err: Error(body),
+  handler: Handler(body, message),
+) -> Effect(message) {
   use dispatch <- effect.from
 
   Error(err)
@@ -537,13 +559,13 @@ fn reject(err: Error, handler: Handler(msg)) -> Effect(msg) {
 fn decode_json_body(
   response: Response(String),
   decoder: decode.Decoder(a),
-) -> Result(a, Error) {
+) -> Result(a, Error(String)) {
   response.body
   |> json.parse(decoder)
   |> result.map_error(JsonError)
 }
 
-fn to_uri(uri_string: String) -> Result(Uri, Error) {
+fn to_uri(uri_string: String) -> Result(Uri, Error(body)) {
   case uri_string {
     "./" <> _ | "/" <> _ -> parse_relative_uri(uri_string)
     _ -> uri.parse(uri_string)
