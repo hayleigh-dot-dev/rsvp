@@ -4,7 +4,7 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/rsvp/)
 
 ```sh
-gleam add rsvp@1
+gleam add rsvp@2
 ```
 
 Rsvp helps you make HTTP requests and handle their responses in a Lustre application.
