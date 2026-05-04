@@ -13,7 +13,7 @@ type Post {
 }
 
 type Msg {
-  ApiReturnedPost(Result(Post, rsvp.Error))
+  ApiReturnedPost(Result(Post, rsvp.Error(String)))
 }
 
 fn get_todo(id) {

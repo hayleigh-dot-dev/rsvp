@@ -14,7 +14,7 @@ type NewPost {
 }
 
 type Msg {
-  ApiCreatedPost(Result(Response(String), rsvp.Error))
+  ApiCreatedPost(Result(Response(String), rsvp.Error(String)))
 }
 
 fn create_post(new_post: NewPost) {

@@ -17,7 +17,7 @@ type User {
 }
 
 type Msg {
-  ApiReturnedUser(Result(User, rsvp.Error))
+  ApiReturnedUser(Result(User, rsvp.Error(String)))
 }
 
 fn get_user(api_token: String) {
