@@ -461,6 +461,7 @@ fn do_send(
       }
     }),
   )
+  |> promise.rescue(fn(_) { Error(NetworkError) })
   |> promise.map(handler.run)
   |> promise.tap(dispatch)
 
@@ -524,6 +525,7 @@ fn do_send_bits(
       }
     }),
   )
+  |> promise.rescue(fn(_) { Error(NetworkError) })
   |> promise.map(handler.run)
   |> promise.tap(dispatch)
 
