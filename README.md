@@ -34,11 +34,11 @@ meaning we need to do three things to properly make a request:
 
 The following recipes are available to help you get started with rsvp:
 
-- [Fetching JSON](./recipes/get-json.html)
+- [Fetching JSON](./recipes/get-json.md)
 
-- [Post JSON](./recipes/post-json.html)
+- [Post JSON](./recipes/post-json.md)
 
-- [Include authorization headers](./recipes/authorization-headers.html)
+- [Include authorization headers](./recipes/authorization-headers.md)
 
 If you think a common use case is missing or you'd like to contribute a recipe
 yourself, please open an issue or pull request!
