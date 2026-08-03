@@ -4,7 +4,9 @@ import gleam/dynamic/decode
 import gleam/http
 import gleam/http/request.{type Request}
 import gleam/json.{type Json}
+import gleam/list
 import gleam/result
+import gleam/string
 import gleam/uri.{type Uri}
 import lustre/dev/simulate.{type Simulation} as lustre_simulate
 import lustre/effect.{type Effect}
@@ -122,8 +124,22 @@ fn expect_json_response(
     use response <- result.try(result)
 
     case response.get_header(response, "content-type") {
-      Ok("application/json") -> Ok(response)
-      Ok("application/json;" <> _) -> Ok(response)
+      Ok("application/json") | Ok("application/json;" <> _) -> Ok(response)
+      Ok("application/" <> content_type) -> {
+        let is_json =
+          string.split(content_type, "+")
+          |> list.any(fn(segment) {
+            case segment {
+              "json" | "json;" <> _ -> True
+              _ -> False
+            }
+          })
+
+        case is_json {
+          True -> Ok(response)
+          False -> Error(UnhandledResponse(response))
+        }
+      }
       _ -> Error(UnhandledResponse(response))
     }
   })
